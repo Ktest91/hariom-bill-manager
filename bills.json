@@ -1,0 +1,24 @@
+{
+  "ujala": [
+    {
+      "date": "2024-02-20",
+      "billNo": "UJ123",
+      "total": "₹1500",
+      "items": [
+        {"name": "Saree X", "qty": 10, "rate": 150}
+      ],
+      "photo": "https://drive.google.com/uc?export=view&id=DRIVE_FILE_ID"
+    }
+  ],
+  "surya": [
+    {
+      "date": "2024-03-10",
+      "billNo": "S001",
+      "total": "₹2000",
+      "items": [
+        {"name": "Suit A", "qty": 5, "rate": 400}
+      ],
+      "photo": "https://drive.google.com/uc?export=view&id=DRIVE_FILE_ID"
+    }
+  ]
+}
