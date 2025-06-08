@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hari Om Bill Manager</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+    h1 {
+      color: darkred;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .bill {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+    img {
+      max-width: 100%;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hari Om Bill Manager</h1>
+
+    <h3>Add New Bill</h3>
+    <form id="billForm">
+      <input name="company" placeholder="Company Name" required>
+      <input type="date" name="date" required>
+      <input name="billNo" placeholder="Bill No." required>
+      <input name="total" placeholder="Total Amount" required>
+      <input name="items" placeholder="Items (comma separated)">
+      <input type="file" id="billImage" accept="image/*" required>
+      <button type="submit">Submit Bill</button>
+    </form>
+
+    <h3>Search Bills</h3>
+    <input id="searchInput" placeholder="Search by date (YYYY-MM-DD) or name...">
+
+    <div id="billsContainer"></div>
+  </div>
+
+  <script>
+    const GOOGLE_SCRIPT_URL = "YOUR_SCRIPT_WEB_APP_URL"; // Replace with your Apps Script URL
+
+    document.getElementById("billForm").onsubmit = async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const file = document.getElementById("billImage").files[0];
+      const reader = new FileReader();
+
+      reader.onloadend = async () => {
+        const base64 = reader.result.split(",")[1];
+
+        const payload = {
+          company: form.company.value,
+          date: form.date.value,
+          billNo: form.billNo.value,
+          total: form.total.value,
+          items: form.items.value.split(",").map(i => i.trim()),
+          image: {
+            base64,
+            name: file.name,
+            type: file.type
+          }
+        };
+
+        const res = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        alert("Bill uploaded! Image URL: " + result.imageUrl);
+        form.reset();
+        loadBills();
+      };
+
+      reader.readAsDataURL(file);
+    };
+
+    async function loadBills() {
+      const sheetUrl = 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/gviz/tq?tqx=out:json'; // Replace
+      const response = await fetch(sheetUrl);
+      const text = await response.text();
+      const json = JSON.parse(text.substring(47).slice(0, -2));
+      const rows = json.table.rows;
+
+      const bills = rows.map(r => ({
+        company: r.c[0]?.v,
+        date: r.c[1]?.v,
+        billNo: r.c[2]?.v,
+        total: r.c[3]?.v,
+        items: r.c[4]?.v,
+        imageUrl: r.c[5]?.v
+      }));
+
+      const container = document.getElementById("billsContainer");
+      const searchValue = document.getElementById("searchInput").value.toLowerCase();
+
+      container.innerHTML = "";
+      bills.filter(bill =>
+        bill.company?.toLowerCase().includes(searchValue) ||
+        bill.date?.includes(searchValue)
+      ).forEach(bill => {
+        container.innerHTML += `
+          <div class="bill">
+            <strong>${bill.company}</strong><br>
+            Date: ${bill.date} | Bill No: ${bill.billNo} | Total: ₹${bill.total}<br>
+            Items: ${bill.items}<br>
+            <img src="${bill.imageUrl}" />
+          </div>
+        `;
+      });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", loadBills);
+    window.onload = loadBills;
+  </script>
+</body>
+</html>
